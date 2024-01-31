@@ -3,7 +3,13 @@ import numpy as np
 import random
 import matplotlib.animation as animation
 
-#
+#######################################################################################################
+# Set the seeds
+np.random.seed(2024)
+random.seed(2024)
+
+
+#######################################################################################################
 # firmware instruction format:
 # (type, duration)
 # (1, t) - rotate same direction t times each time 1 degree
@@ -12,13 +18,13 @@ import matplotlib.animation as animation
 # (2, t) - rnd dir or stop t times
 # (3, t) - rnd dir or stop pick time as rnd(MIN_RND_DURATION, upto t (t + MIN_RND_DURATION))
 # Example firmware instruction: [(2, 90),  (3, 24), (2, 45), (-1, 45), (2, 45), (0, 45)]
-
+#######################################################################################################
 # Constants
 # Weights for the random direction choice: Counterclockwise, Stop, Clockwise
 DIRECTION_WEIGHTS = [1, 2, 1]  # Adjust weights as needed
 MIN_RND_DURATION = 1  # Minimum random duration
-theN = 5
-theM = 5
+theN = 3
+theM = 3
 GRID_SIZE = (theN, theM)  # n x m grid
 TOTAL_QUEEN_EDGES_FOR_CONNECTED_GRID = 4 * theM * theN - 3 * theM - 3 * theN + 2
 THETA = np.pi / 3  # 60 degrees sector angle
@@ -28,10 +34,59 @@ ANTENNA_RANGE = 1.5  # Range for each antenna
 time_step = 0
 
 all_pairs_so_far = set()
+connected_reached = 0
+
+
+#Adjacency matrix
+adj_mtx = np.zeros([theN * theM, theN * theM], dtype = int)
+
+#######################################################################################################
+
+
+
+#######################################################################################################
+
+
+def is_connected(adj_mtx, start_vertex):
+    """Check if the graph is connected using DFS."""
+    n = len(adj_mtx)
+    visited = [False] * n
+    stack = [start_vertex]
+
+    while stack:
+        vertex = stack.pop()
+        if not visited[vertex]:
+            visited[vertex] = True
+            for i in range(n):
+                if adj_mtx[vertex][i] == 1 and not visited[i]:
+                    stack.append(i)
+
+    return all(visited)
+
+#######################################################################################################
+
+def is_spanning_tree(adj_mtx):
+    """Check if the graph is a spanning tree."""
+    n = len(adj_mtx)
+    num_edges = sum(sum(row) for row in adj_mtx) // 2
+
+    # Spanning tree must have n-1 edges
+    if num_edges != n - 1:
+        return False
+
+    # Spanning tree must be connected
+    return is_connected(adj_mtx, 0)
+
+
+
+
+#######################################################################################################
 
 def normalize_angle(angle):
         return angle % (2 * np.pi)
 
+
+#######################################################################################################
 class Antenna:
     def __init__(self, id, position, firmware):
         self.id = id
@@ -118,7 +173,7 @@ class Antenna:
     def normalize_angle(angle):
         return angle % (2 * np.pi)
 
-
+#######################################################################################################
 
 
 
@@ -150,17 +205,17 @@ def is_in_range_and_sector(point, center, direction, theta, rangex):
     else:
         return angle_to_point >= start_angle or angle_to_point <= end_angle
 
-
+#######################################################################################################
 
 def antennas_see_each_other(antenna1, antenna2):
     return (is_in_range_and_sector(antenna1.position, antenna2.position, antenna2.direction, THETA, ANTENNA_RANGE) and
             is_in_range_and_sector(antenna2.position, antenna1.position, antenna1.direction, THETA, ANTENNA_RANGE))
 
 
-
+#######################################################################################################
 
 # Initialize antennas
-firmware_program = [(-1, 90),  (3, 24), (2, 45), (-1, 45), (2, 45), (0, 45)]
+firmware_program = [ (3, 50), (-1, 90),  (3, 50), (2, 45), (-1, 45), (2, 45), (0, 45)]
 antennas = [Antenna(i, np.array([x, y]), firmware_program) for i, (x, y) in enumerate(np.ndindex(GRID_SIZE))]
 
 #antennas = [Antenna(i, np.array([x, y])) for i, (x, y) in enumerate(np.ndindex(GRID_SIZE))]
@@ -168,14 +223,29 @@ antennas = [Antenna(i, np.array([x, y]), firmware_program) for i, (x, y) in enum
 def update(frame, antennas, ax):
     global time_step
     global all_pairs_so_far
+    global adj_mtx
+    global connected_reached
 
     time_step = frame
     nn = len(all_pairs_so_far)
+    if (connected_reached == 0) and (nn != 0):
+             if (is_connected(adj_mtx, list(all_pairs_so_far)[0][0])):
+                print(f"Connected graph reached at Time Unit: {frame} -  {nn} edges of {TOTAL_QUEEN_EDGES_FOR_CONNECTED_GRID}: {round(100 * nn / TOTAL_QUEEN_EDGES_FOR_CONNECTED_GRID, 2)} % completed.")
+                print("All pairs of connected graph:",all_pairs_so_far)
+                connected_reached = frame
+                #return
 
     ax.clear()
     ax.set_xlim(-1, GRID_SIZE[0])
     ax.set_ylim(-1, GRID_SIZE[1])
-    ax.set_title(f"Time Unit: {frame} -  {nn} edges of {TOTAL_QUEEN_EDGES_FOR_CONNECTED_GRID}: {round(100 * nn / TOTAL_QUEEN_EDGES_FOR_CONNECTED_GRID, 2)} % completed.")
+    if (connected_reached == 0):
+        ax.set_title(f"Time Unit: {frame} -  {nn} edges of {TOTAL_QUEEN_EDGES_FOR_CONNECTED_GRID}: {round(100 * nn / TOTAL_QUEEN_EDGES_FOR_CONNECTED_GRID, 2)} % completed.\n Not Connected yet!")
+    else:
+         ax.set_title(f"Time Unit: {frame} -  {nn} edges of {TOTAL_QUEEN_EDGES_FOR_CONNECTED_GRID}: {round(100 * nn / TOTAL_QUEEN_EDGES_FOR_CONNECTED_GRID, 2)} % completed.\n Connected graph reached at Time Unit: {connected_reached}!")
+
+    #See stat while saving mp4
+
+    print(f"Time Unit: {frame} -  {nn} edges of {TOTAL_QUEEN_EDGES_FOR_CONNECTED_GRID}: {round(100 * nn / TOTAL_QUEEN_EDGES_FOR_CONNECTED_GRID, 2)} % completed.")
 
     for antenna in antennas:
         antenna.rotate()
@@ -205,6 +275,11 @@ def update(frame, antennas, ax):
             if i < j and antennas_see_each_other(antenna1, antenna2):
                 discovered_pairs.add((antenna1.id, antenna2.id))
                 all_pairs_so_far.add((antenna1.id, antenna2.id))
+                #print(antenna1.position, antenna2.position)
+                adj_mtx[antenna1.id][antenna2.id] = 1
+                adj_mtx[antenna2.id][antenna1.id] = 1
+
+
                 #Add them to others n set
                 antenna1.neighbors_so_far.add(antenna2.id)
                 antenna2.neighbors_so_far.add(antenna1.id)
@@ -249,7 +324,7 @@ def update(frame, antennas, ax):
 fig, ax = plt.subplots(figsize=(6, 6))
 ani = animation.FuncAnimation(fig, update, frames=TIME_UNITS, fargs=(antennas, ax), interval=1)
 # To save uncomment the following and comment  plt.show() - faster!!!
-# ani.save('antenna.mp4', fps=10.0, dpi=600)
+#ani.save("antenna" + str(theM) + "x" + str(theN) + ".mp4", fps=25.0, dpi=300)
 
 
 # To show:
