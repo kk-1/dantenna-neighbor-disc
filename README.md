@@ -1,7 +1,7 @@
-# dantenna-neighbor-disc
-Directed Antenna Neighborhood Discovery - Simulation Codes and Data
+# Directed Antenna Neighborhood Discovery
+The repository contains Simulation Codes and Data for our Directed Antenna Neighborhood Discovery project
 
-##  Antenna Simulator:
+##  Antenna Simulator Developed:
 ![Antenna Simulator](https://github.com/kk-1/dantenna-neighbor-disc/blob/main/antenna-sim.gif)
 
   
