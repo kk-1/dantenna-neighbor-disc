@@ -1,0 +1,87 @@
+#!/bin/bash
+
+########################################################
+# Global Params
+########################################################
+# N sims
+NUM_SIM=20
+
+# Random SEED
+RND_SEED_ORIG=2024
+
+########################################################
+
+########################################################
+# QL and variants results
+########################################################
+
+prg_name="adaptive-pruning-etrace-cmd-v2-2.py"
+
+out_prefix="adaptive-pruning-v2-grid"
+etrace_prefix_root="etrace-adaptive-pruning-v2-grid"
+
+declare -a alpha=(
+	0.0
+	0.3
+	0.5
+	0.7
+	1.0
+)
+
+declare -a gamma=(
+	0.0
+	0.3
+	0.5
+	0.7
+	1.0
+)
+
+# epsilon = 0 takes long time
+
+declare -a epsilon=(
+	0.1
+	0.3
+	0.5
+	0.7
+	1.0
+)
+
+RND_SEED=$RND_SEED_ORIG
+
+for SIM_NUM in $(seq 1 $NUM_SIM); do
+	for a in "${alpha[@]}"; do
+		for g in "${gamma[@]}"; do
+			for e in "${epsilon[@]}"; do
+				etrace_prefix=$etrace_prefix_root-$a-$g-$e
+
+				echo "python3 $prg_name $a $g $e 6 $RND_SEED $etrace_prefix-out6-$SIM_NUM.csv >> $out_prefix-out6-$SIM_NUM.txt | tee -a $out_prefix-log6-$SIM_NUM.txt"
+				echo "python3 $prg_name $a $g $e 8 $RND_SEED $etrace_prefix-out8-$SIM_NUM.csv >> $out_prefix-out8-$SIM_NUM.txt | tee -a $out_prefix-log8-$SIM_NUM.txt"
+				echo "python3 $prg_name $a $g $e 10 $RND_SEED $etrace_prefix-out10-$SIM_NUM.csv >> $out_prefix-out10-$SIM_NUM.txt | tee -a $out_prefix-log10-$SIM_NUM.txt"
+				echo "python3 $prg_name $a $g $e 12 $RND_SEED $etrace_prefix-out12-$SIM_NUM.csv >> $out_prefix-out12-$SIM_NUM.txt | tee -a $out_prefix-log12-$SIM_NUM.txt"
+				echo "python3 $prg_name $a $g $e 14 $RND_SEED $etrace_prefix-out14-$SIM_NUM.csv >> $out_prefix-out14-$SIM_NUM.txt | tee -a $out_prefix-log14-$SIM_NUM.txt"
+				echo "python3 $prg_name $a $g $e 16 $RND_SEED $etrace_prefix-out16-$SIM_NUM.csv >> $out_prefix-out16-$SIM_NUM.txt | tee -a $out_prefix-log16-$SIM_NUM.txt"
+
+				python3 $prg_name $a $g $e 6 $RND_SEED $etrace_prefix-out6-$SIM_NUM.csv >>$out_prefix-out6-$SIM_NUM.txt | tee -a $out_prefix-log6-$SIM_NUM.txt &
+				python3 $prg_name $a $g $e 8 $RND_SEED $etrace_prefix-out8-$SIM_NUM.csv >>$out_prefix-out8-$SIM_NUM.txt | tee -a $out_prefix-log8-$SIM_NUM.txt &
+				python3 $prg_name $a $g $e 10 $RND_SEED $etrace_prefix-out10-$SIM_NUM.csv >>$out_prefix-out10-$SIM_NUM.txt | tee -a $out_prefix-log10-$SIM_NUM.txt &
+				python3 $prg_name $a $g $e 12 $RND_SEED $etrace_prefix-out12-$SIM_NUM.csv >>$out_prefix-out12-$SIM_NUM.txt | tee -a $out_prefix-log12-$SIM_NUM.txt &
+				python3 $prg_name $a $g $e 14 $RND_SEED $etrace_prefix-out14-$SIM_NUM.csv >>$out_prefix-out14-$SIM_NUM.txt | tee -a $out_prefix-log14-$SIM_NUM.txt &
+				python3 $prg_name $a $g $e 16 $RND_SEED $etrace_prefix-out16-$SIM_NUM.csv >>$out_prefix-out16-$SIM_NUM.txt | tee -a $out_prefix-log16-$SIM_NUM.txt &
+
+				wait
+				echo ""
+			done
+		done
+	done
+
+	wait
+
+	RND_SEED=$((RND_SEED + 1))
+	echo ""
+done
+
+wait
+
+echo "********** ALL DONE! **********"
+echo ""
+echo ""

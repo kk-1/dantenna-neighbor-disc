@@ -1,0 +1,49 @@
+#!/bin/bash
+
+########################################################
+# Global Params
+########################################################
+# N sims
+NUM_SIM=20
+
+# Random SEED
+RND_SEED_ORIG=2024
+
+########################################################
+
+########################################################
+# RND-WLK results
+########################################################
+
+prg_name="rnd-walk-cmd.py"
+out_prefix="rnd-wlk"
+
+RND_SEED=$RND_SEED_ORIG
+
+for SIM_NUM in $(seq 1 $NUM_SIM); do
+
+	echo "python3 $prg_name 6 $RND_SEED >> $out_prefix-out6-$SIM_NUM.txt | tee -a $out_prefix-log6-$SIM_NUM.txt"
+	echo "python3 $prg_name 8 $RND_SEED >> $out_prefix-out8-$SIM_NUM.txt | tee -a $out_prefix-log8-$SIM_NUM.txt"
+	echo "python3 $prg_name 10 $RND_SEED >> $out_prefix-out10-$SIM_NUM.txt | tee -a $out_prefix-log10-$SIM_NUM.txt"
+	echo "python3 $prg_name 12 $RND_SEED >> $out_prefix-out12-$SIM_NUM.txt | tee -a $out_prefix-log12-$SIM_NUM.txt"
+	echo "python3 $prg_name 14 $RND_SEED >> $out_prefix-out14-$SIM_NUM.txt | tee -a $out_prefix-log14-$SIM_NUM.txt"
+	echo "python3 $prg_name 16 $RND_SEED >> $out_prefix-out16-$SIM_NUM.txt | tee -a $out_prefix-log16-$SIM_NUM.txt"
+
+	python3 $prg_name 6 $RND_SEED >>$out_prefix-out6-$SIM_NUM.txt | tee -a $out_prefix-log6-$SIM_NUM.txt &
+	python3 $prg_name 8 $RND_SEED >>$out_prefix-out8-$SIM_NUM.txt | tee -a $out_prefix-log8-$SIM_NUM.txt &
+	python3 $prg_name 10 $RND_SEED >>$out_prefix-out10-$SIM_NUM.txt | tee -a $out_prefix-log10-$SIM_NUM.txt &
+	python3 $prg_name 12 $RND_SEED >>$out_prefix-out12-$SIM_NUM.txt | tee -a $out_prefix-log12-$SIM_NUM.txt &
+	python3 $prg_name 14 $RND_SEED >>$out_prefix-out14-$SIM_NUM.txt | tee -a $out_prefix-log14-$SIM_NUM.txt &
+	python3 $prg_name 16 $RND_SEED >>$out_prefix-out16-$SIM_NUM.txt | tee -a $out_prefix-log16-$SIM_NUM.txt &
+
+	wait
+
+	RND_SEED=$((RND_SEED + 1))
+	echo ""
+done
+
+wait
+
+echo "********** ALL DONE! **********"
+echo ""
+echo ""
